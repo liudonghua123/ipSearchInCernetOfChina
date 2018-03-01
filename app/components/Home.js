@@ -23,23 +23,24 @@ import cheerio from 'cheerio';
 import iconv from 'iconv-lite';
 import ip from 'ip';
 import util from 'util';
+import { clipboard } from 'electron';
 
 export default class Home extends Component {
-
   constructor(props) {
     super(props);
     this.state = {
       displayText: '',
       searchIp: '',
+      cernetDatabaseUrl: 'https://www.nic.edu.cn/RS/ipstat/internalip/real.html'
     };
   }
 
   ipData = [];
 
-  handleUpdateDatabase = (event) => {
+  handleUpdateDatabase = event => {
     request(
       {
-        url: 'https://www.nic.edu.cn/RS/ipstat/internalip/real.html',
+        url: this.state.cernetDatabaseUrl,
         strictSSL: false,
         encoding: null
       },
@@ -68,15 +69,27 @@ export default class Home extends Component {
         }
       }
     );
-  }
+  };
 
-  handleIpChange = (event) => {
+  handleIpChange = event => {
     this.setState({
-      searchIp: event.target.value,
+      searchIp: event.target.value
     });
+  };
+
+  handleCernetDatabaseUrlChange = event => {
+    this.setState({
+      cernetDatabaseUrl: event.target.value
+    });
+  };
+
+  handleSelectAndCopy = event => {
+    // this.textarea.refs.input.focus();
+    this.textarea.refs.input.select();
+    clipboard.writeText(this.ipData.join('\r\n'));
   }
 
-  handleSearch = (event) => {
+  handleSearch = event => {
     // For checking if a string is blank or contains only white-space:
     // https://stackoverflow.com/questions/154059/how-do-you-check-for-an-empty-string-in-javascript
     if (this.state.searchIp.length === 0 || !this.state.searchIp.trim()) {
@@ -85,37 +98,88 @@ export default class Home extends Component {
     }
     for (const ipWithMaskLength of this.ipData) {
       if (ip.cidrSubnet(ipWithMaskLength).contains(this.state.searchIp)) {
-        this.setState({ displayText: util.format('%s matched in %s', this.state.searchIp, ipWithMaskLength) });
+        this.setState({
+          displayText: util.format(
+            '%s matched in %s',
+            this.state.searchIp,
+            ipWithMaskLength
+          )
+        });
         return;
       }
     }
-    this.setState({ displayText: util.format('%s not matched in database', this.state.searchIp) });
-  }
+    this.setState({
+      displayText: util.format(
+        '%s not matched in database',
+        this.state.searchIp
+      )
+    });
+  };
 
   render() {
     return (
       <MuiThemeProvider>
         <div>
           <Card className={styles.marginContainer}>
-            <RaisedButton
-              label="Update IP Databases"
-              secondary
-              fullWidth
-              onClick={() => this.handleUpdateDatabase()}
-            />
-          </Card>
-          <Card className={styles.marginContainer}>
             <GridList cols={3} cellHeight={40} padding={1}>
               <GridTile cols={2} rows={1}>
-                <TextField hintText="IPv4 Address" value={this.state.searchIp} onChange={this.handleIpChange} fullWidth />
+                <TextField
+                  hintText="IPv4 Address"
+                  value={this.state.cernetDatabaseUrl}
+                  onChange={this.handleCernetDatabaseUrlChange}
+                  fullWidth
+                />
               </GridTile>
               <GridTile cols={1} rows={1}>
-                <RaisedButton label="Search" primary fullWidth onClick={() => this.handleSearch()} />
+                <RaisedButton
+                  label="Update IP Databases"
+                  secondary
+                  fullWidth
+                  onClick={() => this.handleUpdateDatabase()}
+                />
               </GridTile>
             </GridList>
           </Card>
           <Card className={styles.marginContainer}>
-            <EnhancedTextarea value={this.state.displayText} rows={15} rowsMax={15} disabled />
+            <GridList cols={3} cellHeight={40} padding={1}>
+              <GridTile cols={2} rows={1}>
+                <TextField
+                  hintText="IPv4 Address"
+                  value={this.state.searchIp}
+                  onChange={this.handleIpChange}
+                  fullWidth
+                />
+              </GridTile>
+              <GridTile cols={1} rows={1}>
+                <RaisedButton
+                  label="Search"
+                  primary
+                  fullWidth
+                  onClick={() => this.handleSearch()}
+                />
+              </GridTile>
+            </GridList>
+          </Card>
+          <Card className={styles.marginContainer}>
+            <GridList cols={3} cellHeight={40} padding={1}>
+              <GridTile cols={1} rows={1}>
+                <RaisedButton
+                  label="Select and Copy"
+                  primary
+                  fullWidth
+                  onClick={() => this.handleSelectAndCopy()}
+                />
+              </GridTile>
+            </GridList>
+          </Card>
+          <Card className={styles.marginContainer}>
+            <EnhancedTextarea
+              value={this.state.displayText}
+              rows={15}
+              rowsMax={15}
+              // disabled
+              ref={input => {this.textarea = input;}}
+            />
           </Card>
         </div>
       </MuiThemeProvider>
