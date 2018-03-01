@@ -31,7 +31,7 @@
   },
   "browserslist": "electron 1.6",
   "build": {
-    "productName": "ElectronReact",
+    "productName": "IpSearchInCernetOfChina",
     "appId": "org.develar.ElectronReact",
     "files": [
       "dist/",
