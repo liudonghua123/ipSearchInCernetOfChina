@@ -175,8 +175,10 @@ export default class Home extends Component {
           <Card className={styles.marginContainer}>
             <EnhancedTextarea
               value={this.state.displayText}
-              rows={15}
-              rowsMax={15}
+              rows={10}
+              rowsMax={10}
+              height={240}
+              textareaStyle={{lineHeight: '24px'}}
               // disabled
               ref={input => {this.textarea = input;}}
             />
